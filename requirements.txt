@@ -14,3 +14,5 @@ requests
 websockets
 openai
 boto3
+python-socketio[asyncio_client]
+python-socketio[asgi]

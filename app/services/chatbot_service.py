@@ -1,21 +1,24 @@
 import os
-import openai
+from openai import AsyncOpenAI
 from datetime import date, timedelta
-
+from app.db.session import SessionLocal
 from app.services import note_service
-from sqlalchemy.orm import Session
+from app.models.user import User
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Initialize the AsyncOpenAI client
+client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def get_chatbot_response(user_message: str, current_user: User, db: Session) -> str:
+async def get_chatbot_response(user_message: str, current_user: User) -> str:
     # Fetch notes for the current week
     today = date.today()
     start_of_week = today - timedelta(days=today.weekday())  # Monday
     end_of_week = start_of_week + timedelta(days=6)  # Sunday
 
+    db = SessionLocal()
     notes = note_service.get_notes_by_user_and_date(
         db, user_id=current_user.id, start_date=start_of_week, end_date=end_of_week
     )
+    db.close()
 
     # Summarize the emotions from the notes
     total_emotion_counts = {
@@ -34,20 +37,18 @@ def get_chatbot_response(user_message: str, current_user: User, db: Session) -> 
     prevalent_emotion = max(total_emotion_counts, key=total_emotion_counts.get)
 
     # Include the emotional summary in the prompt
-    prompt = (
-        f"You are a mental health assistant.\n"
-        f"The user's prevalent emotion this week has been {prevalent_emotion}.\n"
-        f"User: {user_message}\n"
-        f"Assistant:"
-    )
+    messages = [
+        {"role": "system", "content": "You are a mental health assistant."},
+        {"role": "assistant", "content": f"The user's prevalent emotion this week has been {prevalent_emotion}."},
+        {"role": "user", "content": user_message},
+    ]
 
-    response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=prompt,
+    # Call OpenAI ChatCompletion API asynchronously
+    response = await client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=messages,
         max_tokens=150,
-        n=1,
-        stop=["\n", "User:", "Assistant:"],
         temperature=0.7,
     )
-    answer = response.choices[0].text.strip()
+    answer = response.choices[0].message.content.strip()
     return answer
