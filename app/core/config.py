@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     AWS_REGION: str = "us-east-2"
     AWS_S3_BUCKET_NAME: str
 
+    GOOGLE_CLIENT_ID: str
+
     class Config:
         case_sensitive = True
 

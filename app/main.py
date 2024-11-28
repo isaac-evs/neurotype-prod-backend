@@ -9,6 +9,13 @@ from app.services.chatbot_service import get_chatbot_response
 from jose import jwt, JWTError
 from app.db.session import SessionLocal
 
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+
 # Create a Socket.IO server
 sio = socketio.AsyncServer(
     async_mode='asgi',
