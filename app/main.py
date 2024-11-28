@@ -19,7 +19,7 @@ logging.basicConfig(
 # Create a Socket.IO server
 sio = socketio.AsyncServer(
     async_mode='asgi',
-    cors_allowed_origins=['http://localhost:3000'],  # Frontend origin
+    cors_allowed_origins=['https://neurotype-prod-frontend.onrender.com'],  # Frontend origin
 )
 
 # Create your FastAPI app
@@ -27,7 +27,6 @@ fastapi_app = FastAPI()
 
 # Include your API routes
 fastapi_app.include_router(api_router)
-
 
 
 fastapi_app.add_middleware(
