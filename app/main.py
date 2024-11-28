@@ -28,15 +28,11 @@ fastapi_app = FastAPI()
 # Include your API routes
 fastapi_app.include_router(api_router)
 
-# Add CORS middleware if needed
-origins = [
-    "http://localhost:3000",  # Frontend origin
-    # Add other allowed origins
-]
+
 
 fastapi_app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
