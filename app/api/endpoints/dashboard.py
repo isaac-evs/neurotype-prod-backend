@@ -1,7 +1,7 @@
 # app/api/endpoints/dashboard.py
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from app.api import deps
 from app.schemas.dashboard import DashboardData, DailyEmotionData
