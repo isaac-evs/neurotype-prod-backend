@@ -23,9 +23,16 @@ def get_dashboard(
     start_of_week = today - timedelta(days=today.weekday())  # Monday
     end_of_week = start_of_week + timedelta(days=6)  # Sunday
 
-    # Fetch notes for the current week
+    # Convert dates to datetime
+    start_of_week_datetime = datetime.combine(start_of_week, datetime.min.time())
+    adjusted_end_of_week_datetime = datetime.combine(end_of_week, datetime.max.time()) + timedelta(seconds=1)
+
+    # Fetch notes for the current week using the adjusted end date
     notes = note_service.get_notes_by_user_and_date(
-        db, user_id=current_user.id, start_date=start_of_week, end_date=end_of_week
+        db,
+        user_id=current_user.id,
+        start_date=start_of_week_datetime,
+        end_date=adjusted_end_of_week_datetime
     )
 
     # Initialize emotion counts

@@ -55,5 +55,5 @@ def get_notes_by_user_and_date(
     if start_date:
         query = query.filter(Note.created_at >= start_date)
     if end_date:
-        query = query.filter(Note.created_at <= end_date)
+        query = query.filter(Note.created_at < end_date)
     return query.all()
