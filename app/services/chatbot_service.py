@@ -1,24 +1,42 @@
+# chatbot_service.py
+
 import os
 from openai import AsyncOpenAI
-from datetime import date, timedelta
+from datetime import datetime, timedelta
 from app.db.session import SessionLocal
 from app.services import note_service
 from app.models.user import User
+import pytz  # Ensure pytz is imported
 
 # Initialize the AsyncOpenAI client
 client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 async def get_chatbot_response(user_message: str, current_user: User) -> str:
-    # Fetch notes for the current week
-    today = date.today()
+    # Define UTC timezone
+    utc = pytz.UTC
+
+    # Get current datetime in UTC
+    now_utc = datetime.now(utc)
+    today = now_utc.date()
+
+    # Calculate start and end of the current week in UTC
     start_of_week = today - timedelta(days=today.weekday())  # Monday
     end_of_week = start_of_week + timedelta(days=6)  # Sunday
 
+    # Convert dates to timezone-aware datetime objects
+    start_of_week_datetime = datetime.combine(start_of_week, datetime.min.time()).replace(tzinfo=utc)
+    end_of_week_datetime = datetime.combine(end_of_week, datetime.min.time()).replace(tzinfo=utc) + timedelta(days=1)
+
     db = SessionLocal()
-    notes = note_service.get_notes_by_user_and_date(
-        db, user_id=current_user.id, start_date=start_of_week, end_date=end_of_week
-    )
-    db.close()
+    try:
+        notes = note_service.get_notes_by_user_and_date(
+            db,
+            user_id=current_user.id,
+            start_date=start_of_week_datetime,
+            end_date=end_of_week_datetime
+        )
+    finally:
+        db.close()
 
     # Summarize the emotions from the notes
     total_emotion_counts = {
