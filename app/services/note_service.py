@@ -5,6 +5,7 @@ from app.core.analysis import analyze_text
 
 from datetime import datetime
 from typing import Optional
+import pytz
 
 def get_note_by_id(db: Session, note_id: int):
     return db.query(Note).filter(Note.id == note_id).first()
@@ -23,6 +24,7 @@ def create_user_note(db: Session, note_in: NoteCreate, user_id: int):
         "calm_count": emotion_counts["calm"],
         "sad_count": emotion_counts["sad"],
         "upset_count": emotion_counts["upset"],
+        "created_at": datetime.now(pytz.UTC),
     })
 
     note = Note(**note_data)
@@ -52,8 +54,22 @@ def get_notes_by_user_and_date(
     end_date: Optional[datetime],
 ):
     query = db.query(Note).filter(Note.user_id == user_id)
+    utc = pytz.UTC
+
     if start_date:
+        # Ensure start_date is timezone-aware in UTC
+        if start_date.tzinfo is None:
+            start_date = utc.localize(start_date)
+        else:
+            start_date = start_date.astimezone(utc)
         query = query.filter(Note.created_at >= start_date)
+
     if end_date:
-        query = query.filter(Note.created_at < end_date)
+        # Ensure end_date is timezone-aware in UTC
+        if end_date.tzinfo is None:
+            end_date = utc.localize(end_date)
+        else:
+            end_date = end_date.astimezone(utc)
+        query = query.filter(Note.created_at < end_date)  # Using < for exclusivity
+
     return query.all()

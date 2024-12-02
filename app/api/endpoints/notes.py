@@ -73,10 +73,14 @@ def get_daily_analysis(
     """
     Get the emotional analysis for notes on a specific date.
     """
+    start_datetime = datetime.combine(analysis_date, datetime.min.time()).replace(tzinfo=pytz.UTC)
+    end_datetime = start_datetime + timedelta(days=1)
+
     notes = db.query(Note).filter(
-        Note.user_id == current_user.id,
-        func.date(Note.created_at) == analysis_date
-    ).all()
+         Note.user_id == current_user.id,
+         Note.created_at >= start_datetime,
+         Note.created_at < end_datetime
+     ).all()
 
     total_counts = {
         "happy": sum(note.happy_count for note in notes),

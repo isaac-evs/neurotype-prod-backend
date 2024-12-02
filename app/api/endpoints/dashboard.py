@@ -2,6 +2,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from datetime import date, datetime, timedelta
+import pytz
 
 from app.api import deps
 from app.schemas.dashboard import DashboardData, DailyEmotionData
@@ -18,21 +19,23 @@ def get_dashboard(
 ):
     total_notes = note_service.count_notes_by_user(db, user_id=current_user.id)
 
-    # Calculate the start and end dates of the current week
-    today = date.today()
+    # Calculate the start and end dates of the current week in UTC
+    today = datetime.now(pytz.UTC).date()
     start_of_week = today - timedelta(days=today.weekday())  # Monday
     end_of_week = start_of_week + timedelta(days=6)  # Sunday
 
-    # Convert dates to datetime
-    start_of_week_datetime = datetime.combine(start_of_week, datetime.min.time())
-    adjusted_end_of_week_datetime = datetime.combine(end_of_week, datetime.max.time()) + timedelta(seconds=1)
+    # Adjust end_of_week to include the entire day by adding one day
+    adjusted_end_of_week = datetime.combine(end_of_week, datetime.min.time()).replace(tzinfo=pytz.UTC) + timedelta(days=1)
+
+    # Convert start_of_week to datetime in UTC
+    start_of_week_datetime = datetime.combine(start_of_week, datetime.min.time()).replace(tzinfo=pytz.UTC)
 
     # Fetch notes for the current week using the adjusted end date
     notes = note_service.get_notes_by_user_and_date(
         db,
         user_id=current_user.id,
         start_date=start_of_week_datetime,
-        end_date=adjusted_end_of_week_datetime
+        end_date=adjusted_end_of_week
     )
 
     # Initialize emotion counts
